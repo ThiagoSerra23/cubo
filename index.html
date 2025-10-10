@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cubo Convite Interativo</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Cubo Convite Interativo (um botão de giro)</title>
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+:root{
+  /* Ajuste esta variável para mudar o tamanho do cubo/cards */
+  --cube-size: 300px; /* ex: 250px, 300px, 350px */
+  --cube-half: calc(var(--cube-size) / 2);
 }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: rgb(15, 15, 15);
+  background-color: rgb(15,15,15);
   overflow: hidden;
   font-family: Arial, sans-serif;
   color: white;
@@ -25,8 +27,8 @@ body {
 /* === Cubo === */
 .cube {
   position: relative;
-  width: 400px;
-  height: 400px;
+  width: var(--cube-size);
+  height: var(--cube-size);
   transform-style: preserve-3d;
   animation: rotate-cube 10s linear infinite;
   cursor: pointer;
@@ -45,11 +47,35 @@ body {
   transform-style: preserve-3d;
 }
 
-/* Faces do cubo */
-.cube div span, .top, .bottom {
+/* Faces do cubo: os elementos pai (span) */
+.cube div span {
   position: absolute;
   width: 100%;
   height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateY(calc(90deg * var(--i))) translateZ(var(--cube-half));
+}
+
+.top {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateX(90deg) translateZ(var(--cube-half));
+}
+
+.bottom {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateX(90deg) translateZ(calc(-1 * var(--cube-half)));
+}
+
+/* Conteúdo visível da face (imagem) */
+.face-content {
+  position: absolute;
+  inset: 0;
   background-size: cover;
   background-position: center;
   display: flex;
@@ -57,64 +83,86 @@ body {
   justify-content: center;
   backface-visibility: hidden;
   border: 1px solid rgba(255,255,255,0.15);
-  transition: transform 1s ease, opacity 0.6s ease, background-image 0.8s ease;
+  transition: transform 0.45s ease, opacity 0.45s ease, background-image 0.8s ease;
+  transform-origin: center;
+  --img-rot: 0deg;
+  transform: rotate(var(--img-rot));
+  pointer-events: none;
 }
 
-.cube.rotate span,
-/* 🔹 Opacidade enquanto gira */
-.cube.rotate .top,
-.cube.rotate .bottom {
+.cube.rotate .face-content,
+.cube.rotate .top .face-content,
+.cube.rotate .bottom .face-content {
   opacity: 0.8;
 }
 
-.cube.card-mode span,
-.cube.card-mode .top,
-.cube.card-mode .bottom {
-  opacity: 1;
-}
-
-/* === Faces posicionadas === */
-.cube div span {
-  transform: rotateY(calc(90deg * var(--i))) translateZ(200px);
-}
-
-.top {
-  transform: rotateX(90deg) translateZ(200px);
-}
-
-.bottom {
-  transform: rotateX(90deg) translateZ(-200px);
-}
-
-/* === Modo Cartas === */
+/* Modo cartas (pausa rotação do cubo) */
 .cube.card-mode {
   animation: none;
-  transform: rotateX(0deg) rotateY(0deg) scale(1.2);
+  transform: rotateX(0deg) rotateY(0deg) scale(1.12);
 }
 
-.card-mode span,
-.card-mode .top {
+.cube.card-mode span,
+.cube.card-mode .top {
   transform: translateZ(0) rotateY(0) rotateX(0);
   pointer-events: none;
 }
 
-.card-mode .bottom {
-  transform: rotateX(90deg) translateZ(-200px);
+.cube.card-mode .bottom {
+  transform: rotateX(90deg) translateZ(calc(-1 * var(--cube-half)));
 }
 
-/* Carta visível */
+/* Carta visível: quanto "sai" para frente */
 .card-visible {
   opacity: 1 !important;
-  transform: translateZ(400px) scale(1.1) !important;
+  transform: translateZ(calc(var(--cube-size))) scale(1.05) !important;
   pointer-events: auto !important;
 }
 
-/* Texto */
+/* Texto e informações */
 .info {
   position: absolute;
   bottom: 40px;
-  font-size: 20px;
-  opacity: 0.8;
+  font-size: 18px;
+  opacity: 0.9;
+}
+
+/* Controles de rotação (APENAS UM BOTÃO) - aparece só no modo carta */
+.controls {
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  gap: 8px;
+  z-index: 50;
+}
+
+.cube.card-mode + .controls {
+  display: flex;
+}
+
+/* Botão único */
+.controls button {
+  background: rgba(255,255,255,0.06);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 10px 16px;
+  font-size: 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.controls button:active { transform: scale(0.98); }
+.controls button:hover { background: rgba(255,255,255,0.09); }
+
+/* Responsivo */
+@media (max-width: 480px) {
+  :root { --cube-size: 260px; }
+  .info { font-size: 14px; bottom: 26px; }
+  .controls { bottom: 80px; }
 }
 </style>
 </head>
@@ -122,15 +170,19 @@ body {
 
 <div class="cube rotate" id="cube">
   <div>
-    <!-- 🔹 Faces do cubo — todas iguais inicialmente -->
-    <span style="--i:0; background-image: url('img/meio.jpg');"></span>
-    <span style="--i:1; background-image: url('img/meio.jpg');"></span>
-    <span style="--i:2; background-image: url('img/meio.jpg');"></span>
-    <span style="--i:3; background-image: url('img/meio.jpg');"></span>
+    <span style="--i:0;"><div class="face-content" style="background-image: url('img/meio.jpg');"></div></span>
+    <span style="--i:1;"><div class="face-content" style="background-image: url('img/meio.jpg');"></div></span>
+    <span style="--i:2;"><div class="face-content" style="background-image: url('img/meio.jpg');"></div></span>
+    <span style="--i:3;"><div class="face-content" style="background-image: url('img/meio.jpg');"></div></span>
   </div>
 
-  <div class="top" style="background-image: url('img/meio.jpg');"></div>
-  <div class="bottom" style="background-image: url('img/meio.jpg');"></div>
+  <div class="top"><div class="face-content" style="background-image: url('img/meio.jpg');"></div></div>
+  <div class="bottom"><div class="face-content" style="background-image: url('img/meio.jpg');"></div></div>
+</div>
+
+<!-- UM botão apenas -->
+<div class="controls" id="controls" aria-hidden="true">
+  <button id="rotateBtn" title="Girar 90°">⟳</button>
 </div>
 
 <div class="info" id="info">Clique no cubo</div>
@@ -139,11 +191,13 @@ body {
 const cube = document.getElementById("cube");
 const faces = cube.querySelectorAll("span, .top, .bottom");
 const info = document.getElementById("info");
+const controls = document.getElementById("controls");
+const rotateBtn = document.getElementById("rotateBtn");
 
 let step = 0;
 let inCardMode = false;
 
-/* 🔹 Imagens do convite */
+/* Imagens do convite (substitua pelos seus caminhos) */
 const conviteImgs = [
   'img/face1.jpg',
   'img/face2.jpg',
@@ -151,51 +205,99 @@ const conviteImgs = [
   'img/face4.jpg'
 ];
 
-/* 🔹 Imagem padrão do cubo */
 const padraoImg = 'img/meio.jpg';
 
+function contentOf(faceEl) { return faceEl.querySelector('.face-content'); }
+function resetRotation(faceEl) { const c = contentOf(faceEl); if (c) c.style.setProperty('--img-rot','0deg'); }
+
+function mostrarConvite(index) {
+  faces.forEach(face => {
+    const c = contentOf(face);
+    if (c) { c.style.backgroundImage = `url('${padraoImg}')`; c.style.setProperty('--img-rot','0deg'); }
+    face.classList.remove('card-visible');
+  });
+
+  const face = faces[index];
+  const content = contentOf(face);
+  if (!face || !content) return;
+  content.style.backgroundImage = `url('${conviteImgs[index]}')`;
+  face.classList.add('card-visible');
+  info.textContent = "Clique no cubo para continuar.";
+}
+
+/* Oculta a carta atual e reseta rotação */
+function ocultarConvite(index) {
+  const face = faces[index];
+  if (!face) return;
+  face.classList.remove('card-visible');
+  const content = contentOf(face);
+  if (content) content.style.setProperty('--img-rot','0deg');
+}
+
+function voltarCubo() {
+  info.textContent = "Voltando ao cubo...";
+  controls.setAttribute('aria-hidden','true');
+  setTimeout(() => {
+    faces.forEach(face => {
+      const c = contentOf(face);
+      if (c) c.style.backgroundImage = `url('${padraoImg}')`;
+      resetRotation(face);
+    });
+    cube.classList.remove("card-mode");
+    cube.classList.add("rotate");
+    step = 0;
+    inCardMode = false;
+    info.textContent = "Clique no cubo";
+  }, 1200);
+}
+
+/* Clique no cubo: entra/sai do modo carta ou avança cartas */
 cube.addEventListener("click", () => {
   if (!inCardMode) {
-    /* --- Entrando no modo convite --- */
     cube.classList.remove("rotate");
     cube.classList.add("card-mode");
     info.textContent = "Clique para ver a próxima parte do convite...";
     inCardMode = true;
     step = 0;
     mostrarConvite(step);
+    controls.setAttribute('aria-hidden','false');
   } else {
     ocultarConvite(step);
     step++;
     if (step < conviteImgs.length) {
-      setTimeout(() => mostrarConvite(step), 400);
+      setTimeout(() => mostrarConvite(step), 350);
     } else {
       voltarCubo();
     }
   }
 });
 
-function mostrarConvite(index) {
-  faces.forEach(face => face.style.backgroundImage = `url('${padraoImg}')`);
-  const face = faces[index];
-  face.style.backgroundImage = `url('${conviteImgs[index]}')`;
-  face.classList.add("card-visible");
+/* Funções de rotação (aplicadas só à imagem da face atual) */
+function currentFace() { if (!inCardMode) return undefined; return faces[step]; }
+
+function getCurrentRotation(contentEl) {
+  const val = getComputedStyle(contentEl).getPropertyValue('--img-rot') || '0deg';
+  return parseInt(val.replace('deg','')) || 0;
 }
 
-function ocultarConvite(index) {
-  faces[index].classList.remove("card-visible");
+function setRotation(contentEl, degrees) { contentEl.style.setProperty('--img-rot', `${degrees}deg`); }
+
+function rotateCurrentBy(delta) {
+  const face = currentFace();
+  if (!face) return;
+  const content = contentOf(face);
+  if (!content) return;
+  let now = getCurrentRotation(content);
+  now = now + delta;
+  now = ((now % 360) + 360) % 360;
+  setRotation(content, now);
 }
 
-function voltarCubo() {
-  info.textContent = "Voltando ao cubo...";
-  setTimeout(() => {
-    faces.forEach(face => face.style.backgroundImage = `url('${padraoImg}')`);
-    cube.classList.remove("card-mode");
-    cube.classList.add("rotate");
-    step = 0;
-    inCardMode = false;
-    info.textContent = "Clique no cubo";
-  }, 1500);
-}
+/* Botão único: gira 90° horário a cada clique */
+rotateBtn.addEventListener('click', (e) => {
+  e.stopPropagation(); // impede que o clique avance a carta
+  rotateCurrentBy(90);
+});
 </script>
 
 </body>
